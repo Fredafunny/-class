@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作業追蹤</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        label, select, input {
+            margin: 10px;
+            font-size: 16px;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📊 作業追蹤</h1>
+
+    <label for="studentSelect">選擇學生：</label>
+    <select id="studentSelect"></select>
+
+    <label for="statusSelect">選擇狀態：</label>
+    <select id="statusSelect">
+        <option value="all">全部</option>
+        <option value="未繳交">未繳交</option>
+        <option value="已繳交">已繳交</option>
+        <option value="待訂正">待訂正</option>
+        <option value="已訂正">已訂正</option>
+    </select>
+
+    <label for="startDate">開始日期：</label>
+    <input type="date" id="startDate">
+
+    <label for="endDate">結束日期：</label>
+    <input type="date" id="endDate">
+
+    <button onclick="searchTasks()">🔍 搜尋</button>
+
+    <table id="resultTable">
+        <thead>
+            <tr>
+                <th>日期</th>
+                <th>任務</th>
+                <th>狀態</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- 搜尋結果將顯示於此 -->
+        </tbody>
+    </table>
+
+    <button onclick="goBack()">返回行事曆</button>
+
+    <script>
+        function loadStudents() {
+            const studentSelect = document.getElementById("studentSelect");
+            const students = JSON.parse(localStorage.getItem("students")) || [];
+            studentSelect.innerHTML = "";
+            students.forEach(student => {
+                let option = document.createElement("option");
+                option.value = student;
+                option.textContent = student;
+                studentSelect.appendChild(option);
+            });
+        }
+
+        function searchTasks() {
+            const student = document.getElementById("studentSelect").value;
+            const statusFilter = document.getElementById("statusSelect").value;
+            const startDate = document.getElementById("startDate").value;
+            const endDate = document.getElementById("endDate").value;
+            const resultTable = document.getElementById("resultTable").querySelector("tbody");
+
+            resultTable.innerHTML = "";
+
+            const tasksData = JSON.parse(localStorage.getItem("tasks")) || {};
+            
+            Object.keys(tasksData).forEach(date => {
+                if ((startDate && date < startDate) || (endDate && date > endDate)) {
+                    return;
+                }
+
+                const taskList = tasksData[date];
+                const statusesData = JSON.parse(localStorage.getItem(`statuses-${date}`)) || {};
+
+                taskList.forEach((task, taskIndex) => {
+                    let studentStatus = statusesData[taskIndex] && statusesData[taskIndex][student];
+
+                    if (!studentStatus) {
+                        return;
+                    }
+
+                    if (statusFilter !== "all" && studentStatus !== statusFilter) {
+                        return;
+                    }
+
+                    let row = resultTable.insertRow();
+                    row.insertCell(0).textContent = date;
+                    row.insertCell(1).textContent = task;
+                    row.insertCell(2).textContent = studentStatus;
+                    row.cells[2].classList.add(studentStatus);
+                });
+            });
+        }
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        window.onload = loadStudents;
+    </script>
+
+</body>
+</html>
