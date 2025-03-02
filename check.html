@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作業進度管理</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { width: 90%; margin: auto; overflow-x: auto; }
+		
+		/* 表格設計 */
+        .table-container {
+            width: 100%;
+            overflow: auto;
+            max-height: 500px; /* 設定最大高度，可捲動 */
+            border: 2px solid black;
+            position: relative;
+        }
+
+        table { 
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th, td { 
+            border: 2px solid black; 
+            padding: 10px; 
+            text-align: center; 
+            min-width: 120px; /* 防止欄位太窄 */
+        }
+
+        /* 固定標題 */
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+			cursor: pointer; */新增的
+        }
+
+        /* 固定左側學生姓名，確保不被覆蓋 */
+        .fixed-left {
+            position: sticky;
+            left: 0;
+            background: #d9eafb; /* 確保有背景色 */
+            z-index: 30; /* 提高層級，避免被內容覆蓋 */
+            white-space: nowrap;
+        }
+		
+		/* 確保 tbody 的學生姓名也固定 */
+        tbody td:first-child {
+            position: sticky;
+            left: 0;
+            background: #d9eafb;
+            z-index: 20;
+        }
+		
+		/* 狀態顏色 */
+        .status { cursor: pointer; font-weight: bold; color: white; } /* 文字改為白色粗體 */
+        .status.red { background-color: red; }
+        .status.green { background-color: green; }
+        .status.yellow { background-color: #DAA520; }
+        .status.blue { background-color: blue; }
+        .status.pink { background-color: pink; }
+		
+		/* 隨機標題顏色 */
+        .task-header {
+            color: white;
+            font-weight: bold;
+        }
+        
+		/* 返回按鈕 */
+        .back-btn { margin: 10px; padding: 10px; background: lightblue; cursor: pointer; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="goBack()">回到上一頁</button>
+        <h3 id="taskTitle"></h3>
+		
+		<div class="table-container">
+        <table id="taskTable"> <!-- 加入 ID -->
+            <thead>
+                <tr id="taskHeaderRow">
+                    <th class="fixed-left">學生姓名</th>
+                    
+                </tr>
+            </thead>
+            <tbody id="taskBody"></tbody>
+        </table>
+		</div>
+    </div>
+
+    <script>
+        function goBack() {
+             // 嘗試從 localStorage 取得最後瀏覽的年份與月份
+           let year = localStorage.getItem("lastYear");
+           let month = localStorage.getItem("lastMonth");
+
+          // 如果 localStorage 沒有記錄，則從網址參數讀取
+         let urlParams = new URLSearchParams(window.location.search);
+         let urlYear = urlParams.get("year");
+         let urlMonth = urlParams.get("month");
+
+         if (!year) year = urlYear;
+         if (!month) month = urlMonth;
+
+        // 如果還是沒有，就回到當前年份與月份
+        if (!year || !month) {
+           let now = new Date();
+           year = now.getFullYear();
+           month = now.getMonth() + 1;
+    }
+        // 返回行事曆頁面，並帶入正確的年份與月份        
+		window.location.href = `index.html?year=${year}&month=${month}`;
+        }
+        
+		// 確保 `year` 和 `month` 是數字，避免錯誤
+        //year = parseInt(year, 10);
+        //month = parseInt(month, 10);
+
+      
+
+        // 讀取 URL 參數
+        function loadTasks() {
+            let urlParams = new URLSearchParams(window.location.search);
+            let year = urlParams.get("year");
+            let month = urlParams.get("month");
+            let day = urlParams.get("day");
+		    
+		// 如果網址沒有 year 和 month，就從 localStorage 取得
+         if (!year || !month) {
+             year = localStorage.getItem("lastYear");
+             month = localStorage.getItem("lastMonth");
+    }
+
+        // 如果還是沒有，就使用當前時間
+         if (!year || !month) {
+            let now = new Date();
+            year = now.getFullYear();
+            month = now.getMonth() + 1;
+    }
+
+        // 確保 `year` 和 `month` 是數字
+        //year = parseInt(year, 10);
+        //month = parseInt(month, 10);
+
+		// 確保 `localStorage` 存儲當前瀏覽的月份 **修正：將最後瀏覽的年份與月份存入 localStorage**
+        localStorage.setItem("lastYear", year);
+        localStorage.setItem("lastMonth", month);
+
+        
+        // 取得學生名單與作業狀態
+        let students = JSON.parse(localStorage.getItem("students")) || [];
+            let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
+            let yearMonth = `${year}-${month}`;  //新增的程式
+            let taskContent = (tasks[yearMonth] && tasks[yearMonth][day]) ? tasks[yearMonth][day].split("\n").map(task => task.trim()) : ["無作業"];
+
+		// 取得當日作業內容，確保 taskContent 是陣列 (新增表頭可以作為整欄變更狀態後不見了)
+		//let taskContent = [];
+        //if (tasks[yearMonth] && tasks[yearMonth][day]) {
+        //let content = tasks[yearMonth][day];
+        //if (typeof content === "string") {
+          //taskContent = content.split("\n").map(task => task.trim());  // 確保字串拆分後是陣列 // 使用換行分割
+        //} else if (Array.isArray(content)) {
+           //taskContent = content;  // 若已經是陣列則直接使用
+        //}
+            //} 
+            
+            //if (taskContent.length === 0) {
+                //taskContent = ["無作業"];
+            //}
+        
+   
+        // 更新標題
+        document.getElementById("taskTitle").innerText = `${year}年${month}月${day}日 作業內容：`;
+		
+		// 隨機生成顏色
+            function getRandomColor() {
+                return `hsl(${Math.random() * 360}, 70%, 70%)`; // HSL 隨機顏色
+            }
+		 
+		 // 清空表頭，確保只生成一次 // 重新建立表頭
+         let taskHeaderRow = document.getElementById("taskHeaderRow");
+         taskHeaderRow.innerHTML = `<th class="fixed-left">學生姓名</th>`; // 先清空表頭
+       
+	    // 依照作業數量，新增對應的表頭欄位 
+        taskContent.forEach((task, index) => {
+                let th = document.createElement("th");
+                th.textContent = task;
+                th.classList.add("task-header");
+                th.style.backgroundColor = getRandomColor(); // 隨機顏色
+				th.onclick = () => changeColumnStatus(index); // 綁定點擊事件(在 taskContent.forEach() 內部，為 <th> 添加 onclick 事件：)
+                taskHeaderRow.appendChild(th);
+            });
+
+    //let tableHeadRow = document.querySelector(".task-table thead tr");
+	
+	// 清除舊的作業標題，重新生成
+    //tableHeadRow.innerHTML = `<th class="fixed-left">學生姓名</th>`; 這裡因為找不到目標標題所以改成下串
+	    // 更新作業標題
+       // document.getElementById("taskHeader").innerText = taskContent;  (這串取消)
+
+    //if (taskContent !== "無作業") {
+       // let taskHeader = document.createElement("th");
+      //  taskHeader.innerText = taskContent;
+      //  tableHeadRow.appendChild(taskHeader);
+    //}
+	    
+		// 清空學生列表 
+		let tableBody = document.getElementById("taskBody");
+        tableBody.innerHTML = "";
+
+        students.forEach(student => {
+            let row = document.createElement("tr");
+
+			
+			// 學生姓名欄
+            let nameCell = document.createElement("td");
+            nameCell.classList.add("fixed-left");
+            nameCell.textContent = student;
+			row.appendChild(nameCell);
+
+            // 為每個學生填入與作業數量對應的欄位 // 依照作業數量，為每個學生填入對應的作業欄位
+            //taskContent.forEach(() => {
+			 taskContent.forEach((_, taskIndex) => {
+                let statusCell = document.createElement("td");
+                statusCell.classList.add("status", "red"); // 預設紅色（未繳交）
+                
+				//statusCell.innerText = "未繳交";
+				let savedStatus = getSavedStatus(year, month, day, student, taskIndex) || "未繳交";
+                //statusCell.onclick = () => cycleStatus(statusCell);
+				statusCell.classList.add(getStatusClass(savedStatus));
+                //row.appendChild(statusCell);
+				statusCell.innerText = savedStatus;
+				
+				statusCell.onclick = () => {
+                        cycleStatus(statusCell);
+                        saveStatus(year, month, day, student, taskIndex, statusCell.innerText);
+                    };
+					row.appendChild(statusCell);
+				});
+                tableBody.appendChild(row);
+          });
+        }
+
+            //row.appendChild(nameCell);
+            //row.appendChild(statusCell);
+            //taskBody.appendChild(row);
+        
+		 //將表頭改成點擊可以改變整欄狀態後，下面這串程式碼取消了
+        function getStatusClass(status) {
+            switch (status) {
+                case "未繳交": return "red";
+                case "已繳交": return "green";
+                case "待訂正": return "yellow";
+                case "已訂正": return "blue";
+                case "請假": return "pink";
+                default: return "";
+		   // return { "未繳交": "red", "已繳交": "green", "待訂正": "yellow", "已訂正": "blue", "請假": "pink" }[status] || "";
+            }
+        }
+
+        function cycleStatus(cell) {
+            const statuses = ["未繳交", "已繳交", "待訂正", "已訂正", "請假"];
+            let index = statuses.indexOf(cell.textContent);
+            index = (index + 1) % statuses.length;
+            cell.textContent = statuses[index];
+            cell.className = "status " + getStatusClass(cell.textContent);
+        }
+		
+		//將表頭改成點擊可以改變整欄狀態後，新增的
+		function changeColumnStatus(index) {
+            document.querySelectorAll(`#taskBody tr`).forEach(row => {
+                let cell = row.children[index + 1];
+                cycleStatus(cell);
+            });
+        }
+		
+		//修正儲存格的狀態為儲存所新增的程式碼
+		function saveStatus(year, month, day, student, taskIndex, status) {
+            let key = `status-${year}-${month}-${day}`;
+            let data = JSON.parse(localStorage.getItem(key)) || {};
+            if (!data[student]) data[student] = {};
+            data[student][taskIndex] = status;
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+        
+		//修正儲存格的狀態為儲存所新增的程式碼
+        function getSavedStatus(year, month, day, student, taskIndex) {
+            let key = `status-${year}-${month}-${day}`;
+            let data = JSON.parse(localStorage.getItem(key)) || {};
+            return data[student]?.[taskIndex];
+        }
+		
+		 window.onload = loadTasks; //新增的
+		 
+    </script>
+</body>
+</html>
