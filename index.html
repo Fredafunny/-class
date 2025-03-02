@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生作業進度管理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+        .container {
+            width: 92%;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+		/* 調整藍色漸層框，使其下移 */
+		.input-section { 
+            background: linear-gradient(to right, rgb(28, 216, 210), rgb(147, 237, 199));
+            padding: 20px; 
+            box-shadow: 3px 3px 10px gray; 
+            width: 100%;
+            margin-top: 20px; /* 增加與上方的間隔 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+			border-radius: 10px;
+            position: relative;
+        }
+		
+		/* 標題 */
+		.title { 
+            text-align: center; 
+            font-size: 32px; 
+            font-weight: bold;
+            margin-bottom: 20px; /* 與下面的內容保持間隔 */
+			color: white;
+        }
+		
+		/* 讓輸入區域置中 */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group label {
+            font-weight: bold;
+            margin-bottom: 10px; /* 讓標題與輸入框有距離 */
+            font-size: 18px;
+			color: white;
+        }
+
+        .input-group textarea {
+            width: 100%;
+			max-width: 400px;
+            height: 80px;
+            font-size: 16px;
+            padding: 8px;
+            border: 2px solid gray;
+            border-radius: 5px;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #A6D3E6, #74b9ff);
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+			color: white;
+            font-size: 18px;
+            margin-top: 10px; /* 讓按鈕與輸入框有間隔 */
+			box-shadow: 2px 2px 5px gray;
+            transition: 0.3s;
+        }
+        .save-btn:hover {
+            background: #0984e3;
+        }
+		
+		/* 調整作業追蹤按鈕 */
+        .tracking-btn {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            padding: 20px 30px; /* 加大按鈕 */
+            font-size: 20px; /* 增大字體 */
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            font-weight: bold;
+			color: white;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            box-shadow: 2px 2px 5px gray;
+            transition: 0.3s;
+        }
+        .tracking-btn:hover {
+            background: #f5e36e;
+        }
+		
+		/* 米白色行事曆區塊 */
+        .calendar-wrapper {
+            background-color: #fbf8e0;
+            padding: 20px;
+            width: 100%;
+            box-shadow: 3px 3px 10px gray;
+            margin-top: 20px;
+			border-radius: 10px;
+        }
+		
+		/* 行事曆樣式 */
+		#calendar-container { text-align: center; margin-top: 10px; }
+        #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; padding: 10px; }
+        .day { padding: 15px; box-shadow: 2px 2px 5px gray; cursor: pointer; background: white; }
+        .weekend { background: #f8d7da; }
+        .task-table { width: 100%; border-collapse: collapse; margin-top: 20px; overflow-x: auto; display: block; }
+        .task-table th, .task-table td { border: 2px solid black; padding: 10px; text-align: center; }
+        .task-table th { background-color: lightgray; position: sticky; left: 0; }
+        .status { cursor: pointer; }
+        .status.red { background-color: red; }
+        .status.green { background-color: green; }
+        .status.yellow { background-color: #DAA520; }
+        .status.blue { background-color: blue; }
+        .status.pink { background-color: pink; }
+        .fixed-left { position: sticky; left: 0; background: white; }
+        .month-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .month-btn {
+            background: linear-gradient(135deg, #17a2b8, #1abc9c);
+            padding: 15px 30px;
+            font-size: 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 2px 2px 5px gray;
+            transition: 0.3s;
+        }
+        .month-btn:hover {
+            background: #138496;
+			 }
+        
+        #monthYear {
+            font-size: 32px;
+            font-weight: bold;
+        }
+            
+		
+		.task-btn {
+           color: blue; !important;
+           font-weight: bold;
+           cursor: pointer;
+           font-size: 24px; !important;  /* 增大字體 */
+           display: inline-block;
+        }
+		
+		.check-btn {
+           color: red; !important;
+           font-weight: bold;
+           cursor: pointer;
+           font-size: 24px; !important; /* 增大字體 */
+           display: inline-block;
+        }
+		
+        /* 模態對話框的樣式 */
+        .modal {
+            display: none; /* 預設為隱藏 */
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+		
+		.day span { display: block; font-size: 12px; color: gray; }  */新增的
+    </style>
+</head>
+<body>
+    
+    <div class="container">  
+         <div class="input-section">
+		 
+		 <div class="title">三年乙班 作業管理整合工具</div>
+            <!-- 作業追蹤按鈕 -->
+		 <button class="tracking-btn" onclick="location.href='tracking.html'">作業追蹤</button>
+			
+			<!-- 輸入學生姓名區塊 -->
+			<div class="input-group">
+            <label for="studentNames">輸入學生姓名</label>
+            <textarea id="studentNames" rows="4" cols="30" placeholder="輸入學生姓名，每行一個"></textarea>
+            <button class="save-btn" onclick="saveNames()" >儲存</button>
+        </div>
+		
+		
+    </div>
+		
+         <!-- 行事曆區塊 -->
+        <div class="calendar-wrapper">
+		<div id="calendar-container">
+            <div class="month-nav">
+                <button class="month-btn" onclick="prevMonth()">上個月</button>
+                <h2 id="monthYear"></h2>
+                <button class="month-btn" onclick="nextMonth()">下個月</button>
+            </div>
+            <div id="calendar"></div>
+        </div>
+    </div>
+    
+    <!-- 模態對話框的結構 -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeTaskModal()">&times;</span>
+            <h3>輸入作業內容</h3>
+            <textarea id="taskInput" rows="4" cols="50" placeholder="請輸入作業內容"></textarea>
+            <br>
+            <button onclick="saveTask()">送出</button>
+        </div>
+    </div>
+    
+    <div class="container" id="taskPage" style="display:none;">
+        <button onclick="goBack()">回到上一頁</button>
+        <h3 id="taskTitle"></h3>
+        <table class="task-table">
+            <thead>
+                <tr>
+                    <th class="fixed-left">學生姓名</th>
+                </tr>
+            </thead>
+            <tbody id="taskBody"></tbody>
+        </table>
+    </div>
+    
+    <script>
+        let students = JSON.parse(localStorage.getItem("students")) || [];
+        let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+		//let selectedDay = null; //新增的 (加入星期幾後，這串不見了)
+        
+        function saveNames() {
+            //students = document.getElementById("studentNames").value.split("\n").filter(name => name.trim() !== ""); (修正後不見了)
+            let students = document.getElementById("studentNames").value.split("\n").filter(name => name.trim() !== "");
+			localStorage.setItem("students", JSON.stringify(students));
+            alert("學生姓名已儲存");
+        }
+
+       function generateCalendar() {
+         let calendar = document.getElementById("calendar");
+	     if (!calendar) return; // 確保行事曆存在(新增的)    
+	     calendar.innerHTML = "";
+	
+        let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        document.getElementById("monthYear").textContent = `${currentYear}年${currentMonth + 1}月`;
+    
+        let yearMonth = `${currentYear}-${currentMonth + 1}`; //固定六日後這行跟下行不見了 先不取消 等等run
+        if (!tasks[yearMonth]) tasks[yearMonth] = {}; // 確保 tasks[yearMonth] 有值  確保月份有初始化(新增的)
+ 
+        for (let i = 1; i <= daysInMonth; i++) {
+          let date = new Date(currentYear, currentMonth, i);  //新增星期幾後出現的
+          //let dayOfWeek = "日一二三四五六"[date.getDay()];      //新增星期幾後出現的(新增六日不見了)
+		  let dayOfWeek = date.getDay();                     //新增固定六日後出現的
+		  
+		  let dayDiv = document.createElement("div");
+		  dayDiv.classList.add("day");
+		  if (dayOfWeek === 0 || dayOfWeek === 6) {
+              dayDiv.classList.add("weekend");
+           }
+          //dayDiv.innerText = `${currentMonth + 1}/${i}`;  //(新增星期幾後不見了)
+          //dayDiv.innerHTML = `${currentMonth + 1}/${i}<span>星期${dayOfWeek}</span>`; //(新增固定六日後不見了)
+		  dayDiv.innerHTML = `${currentMonth + 1}/${i}<span>星期${"日一二三四五六"[dayOfWeek]}</span>`;
+          calendar.appendChild(dayDiv); //新增的
+		  
+		// 「作」按鈕
+        let taskBtn = document.createElement("span");
+        taskBtn.innerText = " 作";
+        taskBtn.classList.add("task-btn");
+		taskBtn.style.fontSize = "18px";  //顏色和字體一直不生效，所以新增這行
+        taskBtn.style.color = "blue";     //顏色和字體一直不生效，所以新增這行
+        taskBtn.onclick = (event) => {
+            event.stopPropagation(); // 避免影響「檢」字的點擊事件
+            openTaskModal(i);
+        };
+
+        // 「檢」按鈕
+        let checkBtn = document.createElement("span");
+        checkBtn.innerText = " 檢";
+        checkBtn.classList.add("check-btn");
+		checkBtn.style.fontSize = "18px";  //顏色和字體一直不生效，所以新增這行
+        checkBtn.style.color = "red";     //顏色和字體一直不生效，所以新增這行
+
+         // 只有當日有作業時才顯示「檢」
+        checkBtn.style.display = tasks[yearMonth][i] ? "inline" : "none";
+        checkBtn.onclick = (event) => {
+            event.stopPropagation(); // 避免影響行事曆點擊
+            let url = `check.html?year=${currentYear}&month=${currentMonth + 1}&day=${i}`;
+            window.open(url, '_blank'); // 開啟新視窗
+        };
+
+                dayDiv.appendChild(taskBtn);
+                dayDiv.appendChild(checkBtn);
+                calendar.appendChild(dayDiv);
+            }
+        }
+        
+        function prevMonth() {
+           currentMonth--;
+           if (currentMonth < 0) {
+               currentMonth = 11;
+               currentYear--;
+    }
+           generateCalendar(); // 只更新行事曆
+}
+
+        function nextMonth() {
+           currentMonth++;
+           if (currentMonth > 11) {
+               currentMonth = 0;
+               currentYear++;
+    }
+    generateCalendar(); // 只更新行事曆
+}
+
+ function openTaskModal(day) {
+    selectedDay = day;
+    let yearMonth = `${currentYear}-${currentMonth + 1}`;
+    document.getElementById("taskInput").value = (tasks[yearMonth] && tasks[yearMonth][day]) ? tasks[yearMonth][day] : "";
+    document.getElementById("taskModal").style.display = "block";
+}
+
+        function closeTaskModal() {
+            document.getElementById("taskModal").style.display = "none";
+        }
+        function saveTask() {
+    let taskContent = document.getElementById("taskInput").value;
+    if (selectedDay !== null) {
+        let yearMonth = `${currentYear}-${currentMonth + 1}`;
+        if (!tasks[yearMonth]) tasks[yearMonth] = {}; // 確保當月有資料
+        tasks[yearMonth][selectedDay] = taskContent; // 存入正確日期
+
+        localStorage.setItem("tasks", JSON.stringify(tasks)); // 更新 localStorage
+        document.getElementById("taskModal").style.display = "none";
+		generateCalendar(); // ⭐ 重新生成行事曆，確保「檢」字出現
+    }
+}
+
+        function goBack() {
+            document.getElementById("taskPage").style.display = "none";
+            document.getElementById("calendarPage").style.display = "block";
+        }
+        
+        // 初始化		
+        window.onload = function() {
+            //let today = new Date();  //再次請他修改字與檢字後，第1~3行程式碼不見了
+            //currentYear = today.getFullYear(); //再次請他修改字與檢字後，第1~3行程式碼不見了
+            //currentMonth = today.getMonth(); //再次請他修改字與檢字後，第1~3行程式碼不見了
+            //generateCalendar(); //修改藍色方框文字與按鈕後程式碼不見了，新增下行那串程式
+			document.getElementById("studentNames").value = (JSON.parse(localStorage.getItem("students")) || []).join("\n");
+        };
+
+    </script>
+</body>
+</html>
